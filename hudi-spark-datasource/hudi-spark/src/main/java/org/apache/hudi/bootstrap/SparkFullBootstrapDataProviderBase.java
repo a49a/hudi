@@ -20,7 +20,6 @@ package org.apache.hudi.bootstrap;
 
 import org.apache.hudi.DataSourceUtils;
 import org.apache.hudi.HoodieSparkUtils;
-import org.apache.hudi.avro.HoodieAvroUtils;
 import org.apache.hudi.avro.model.HoodieFileStatus;
 import org.apache.hudi.client.bootstrap.FullRecordBootstrapDataProvider;
 import org.apache.hudi.client.common.HoodieSparkEngineContext;
@@ -31,7 +30,6 @@ import org.apache.hudi.common.util.Option;
 import org.apache.hudi.common.util.collection.Pair;
 import org.apache.hudi.exception.HoodieIOException;
 import org.apache.hudi.keygen.KeyGenerator;
-import org.apache.hudi.keygen.constant.KeyGeneratorOptions;
 import org.apache.hudi.keygen.factory.HoodieSparkKeyGeneratorFactory;
 
 import org.apache.avro.generic.GenericRecord;
@@ -70,12 +68,8 @@ public abstract class SparkFullBootstrapDataProviderBase extends FullRecordBoots
       RDD<GenericRecord> genericRecords = HoodieSparkUtils.createRdd(inputDataset, structName, namespace, false,
           Option.empty());
       return genericRecords.toJavaRDD().map(gr -> {
-        String orderingVal = HoodieAvroUtils.getNestedFieldValAsString(
-            gr, props.getString("hoodie.datasource.write.precombine.field"), false, props.getBoolean(
-                KeyGeneratorOptions.KEYGENERATOR_CONSISTENT_LOGICAL_TIMESTAMP_ENABLED.key(),
-                Boolean.parseBoolean(KeyGeneratorOptions.KEYGENERATOR_CONSISTENT_LOGICAL_TIMESTAMP_ENABLED.defaultValue())));
         try {
-          return DataSourceUtils.createHoodieRecord(gr, orderingVal, keyGenerator.getKey(gr),
+          return DataSourceUtils.createHoodieRecord(gr, keyGenerator.getKey(gr),
               props.getString("hoodie.datasource.write.payload.class"));
         } catch (IOException ioe) {
           throw new HoodieIOException(ioe.getMessage(), ioe);
